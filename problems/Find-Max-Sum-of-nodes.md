@@ -93,40 +93,30 @@ The input is generated such that edges represent a valid tree.
  * @return {number}
  */
 var maximumValueSum = function(nums, k, edges) {
-    let baseSum = 0;
-    let gains = [];
+    const n = nums.length;
+    const memo = Array.from({ length: n }, () => Array(2).fill(undefined));
 
-    for (let num of nums) {
-        baseSum += num;
-        const flipped = num ^ k;
-        gains.push(flipped - num);
-    }
-
-    // Sort gains in descending order to prioritize biggest positive gains
-    gains.sort((a, b) => b - a);
-
-    // Flip as many beneficial nodes in pairs
-    let totalGain = 0;
-    let flippedCount = 0;
-
-    for (let gain of gains) {
-        if (gain > 0) {
-            flippedCount++;
-            totalGain += gain;
+    function maxSumOfNodes(index, isEven) {
+        if (index === n) {
+            // If the number of XOR operations is odd, it's invalid.
+            return isEven === 1 ? 0 : Number.MIN_SAFE_INTEGER;
         }
+
+        if (memo[index][isEven] !== undefined) {
+            return memo[index][isEven];
+        }
+
+        // Case 1: Do not apply XOR to this node
+        const noXor = nums[index] + maxSumOfNodes(index + 1, isEven);
+
+        // Case 2: Apply XOR to this node (flip even/odd flag)
+        const xorDone = (nums[index] ^ k) + maxSumOfNodes(index + 1, isEven ^ 1);
+
+        // Memoize and return the max of the two choices
+        return memo[index][isEven] = Math.max(noXor, xorDone);
     }
 
-    // If flippedCount is even, all beneficial flips are valid
-    if (flippedCount % 2 === 0) {
-        return baseSum + totalGain;
-    }
-
-    // If odd, remove the smallest positive gain or least negative loss to make it even
-    let bestAlternative = -Infinity;
-    for (let gain of gains) {
-        bestAlternative = Math.max(bestAlternative, -gain);
-    }
-
-    return baseSum + totalGain - bestAlternative;
+    return maxSumOfNodes(0, 1);
 };
+
 ```
